@@ -1,6 +1,6 @@
 /* mini_httpd - small HTTP server
 **
-** Copyright � 1999,2000 by Jef Poskanzer <jef@mail.acme.com>.
+** Copyright © 1999,2000 by Jef Poskanzer <jef@mail.acme.com>.
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -58,20 +58,20 @@
 #include "tdate_parse.h"
 
 #ifdef HAVE_SENDFILE
-                                                                                                                        # ifdef HAVE_LINUX_SENDFILE
-#  include <sys/sendfile.h>
-# else /* HAVE_LINUX_SENDFILE */
-#  include <sys/uio.h>
-# endif /* HAVE_LINUX_SENDFILE */
+#ifdef HAVE_LINUX_SENDFILE
+#include <sys/sendfile.h>
+#else /* HAVE_LINUX_SENDFILE */
+#include <sys/uio.h>
+#endif /* HAVE_LINUX_SENDFILE */
 #endif /* HAVE_SENDFILE */
 
 #if defined(TCP_CORK) && !defined(TCP_NOPUSH)
-                                                                                                                        #define TCP_NOPUSH TCP_CORK
+#define TCP_NOPUSH TCP_CORK
 /* (Linux's TCP_CORK is basically the same as BSD's TCP_NOPUSH.) */
 #endif
 
 #ifdef USE_SSL
-                                                                                                                        #include <openssl/ssl.h>
+#include <openssl/ssl.h>
 #include <openssl/err.h>
 #endif /* USE_SSL */
 
@@ -123,7 +123,7 @@ typedef long long int64_t;
 #define DEFAULT_HTTP_PORT 80
 #endif /* DEFAULT_HTTP_PORT */
 #ifdef USE_SSL
-                                                                                                                        #ifndef DEFAULT_HTTPS_PORT
+#ifndef DEFAULT_HTTPS_PORT
 #define DEFAULT_HTTPS_PORT 443
 #endif /* DEFAULT_HTTPS_PORT */
 #ifndef DEFAULT_CERTFILE
@@ -173,7 +173,7 @@ typedef union {
     struct sockaddr sa;
     struct sockaddr_in sa_in;
 #ifdef USE_IPV6
-                                                                                                                            struct sockaddr_in6 sa_in6;
+    struct sockaddr_in6 sa_in6;
     struct sockaddr_storage sa_stor;
 #endif /* USE_IPV6 */
 } usockaddr;
@@ -202,7 +202,7 @@ static FILE *logfp;
 static int listen4_fd, listen6_fd;
 static int do_ssl;
 #ifdef USE_SSL
-                                                                                                                        static char* certfile;
+static char* certfile;
 static char* cipher;
 static SSL_CTX* ssl_ctx;
 #endif /* USE_SSL */
@@ -265,7 +265,7 @@ static void do_file(void);
 static void do_dir(void);
 
 #ifdef HAVE_SCANDIR
-                                                                                                                        static char* file_details( const char* d, const char* name );
+static char* file_details( const char* d, const char* name );
 static void strencode( char* to, size_t tosize, const char* from );
 #endif /* HAVE_SCANDIR */
 
@@ -419,7 +419,7 @@ main(int argc, char **argv) {
     logfp = (FILE *) 0;
     do_ssl = 0;
 #ifdef USE_SSL
-                                                                                                                            certfile = DEFAULT_CERTFILE;
+    certfile = DEFAULT_CERTFILE;
     cipher = (char*) 0;
 #endif /* USE_SSL */
     argn = 1;
@@ -433,18 +433,18 @@ main(int argc, char **argv) {
         } else if (strcmp(argv[argn], "-D") == 0)
             debug = 1;
 #ifdef USE_SSL
-                                                                                                                                    else if ( strcmp( argv[argn], "-S" ) == 0 )
-	    do_ssl = 1;
-	else if ( strcmp( argv[argn], "-E" ) == 0 && argn + 1 < argc )
-	    {
-	    ++argn;
-	    certfile = argv[argn];
-	    }
-	else if ( strcmp( argv[argn], "-Y" ) == 0 && argn + 1 < argc )
-	    {
-	    ++argn;
-	    cipher = argv[argn];
-	    }
+            else if ( strcmp( argv[argn], "-S" ) == 0 )
+        do_ssl = 1;
+    else if ( strcmp( argv[argn], "-E" ) == 0 && argn + 1 < argc )
+        {
+        ++argn;
+        certfile = argv[argn];
+        }
+    else if ( strcmp( argv[argn], "-Y" ) == 0 && argn + 1 < argc )
+        {
+        ++argn;
+        cipher = argv[argn];
+        }
 #endif /* USE_SSL */
         else if (strcmp(argv[argn], "-p") == 0 && argn + 1 < argc) {
             ++argn;
@@ -499,10 +499,10 @@ main(int argc, char **argv) {
 
     if (port == 0) {
 #ifdef USE_SSL
-                                                                                                                                if ( do_ssl )
-	    port = DEFAULT_HTTPS_PORT;
-	else
-	    port = DEFAULT_HTTP_PORT;
+        if ( do_ssl )
+        port = DEFAULT_HTTPS_PORT;
+    else
+        port = DEFAULT_HTTP_PORT;
 #else /* USE_SSL */
         port = DEFAULT_HTTP_PORT;
 #endif /* USE_SSL */
@@ -579,41 +579,41 @@ main(int argc, char **argv) {
     }
 
 #ifdef USE_SSL
-                                                                                                                            if ( do_ssl )
-	{
-	SSL_load_error_strings();
-	SSLeay_add_ssl_algorithms();
-	ssl_ctx = SSL_CTX_new( SSLv23_server_method() );
-	SSL_CTX_set_options( ssl_ctx, SSL_OP_NO_SSLv2|SSL_OP_NO_SSLv3 );
-	if ( certfile[0] != '\0' )
-	    if ( SSL_CTX_use_certificate_file( ssl_ctx, certfile, SSL_FILETYPE_PEM ) == 0 ||
-		 SSL_CTX_use_certificate_chain_file( ssl_ctx, certfile ) == 0 ||
-		 SSL_CTX_use_PrivateKey_file( ssl_ctx, certfile, SSL_FILETYPE_PEM ) == 0 ||
-		 SSL_CTX_check_private_key( ssl_ctx ) == 0 )
-		{
-		ERR_print_errors_fp( stderr );
-		exit( 1 );
-		}
-	if ( cipher != (char*) 0 )
-	    {
-	    if ( SSL_CTX_set_cipher_list( ssl_ctx, cipher ) == 0 )
-		{
-		ERR_print_errors_fp( stderr );
-		exit( 1 );
-		}
-	    }
-	}
+    if ( do_ssl )
+    {
+    SSL_load_error_strings();
+    SSLeay_add_ssl_algorithms();
+    ssl_ctx = SSL_CTX_new( SSLv23_server_method() );
+    SSL_CTX_set_options( ssl_ctx, SSL_OP_NO_SSLv2|SSL_OP_NO_SSLv3 );
+    if ( certfile[0] != '\0' )
+        if ( SSL_CTX_use_certificate_file( ssl_ctx, certfile, SSL_FILETYPE_PEM ) == 0 ||
+         SSL_CTX_use_certificate_chain_file( ssl_ctx, certfile ) == 0 ||
+         SSL_CTX_use_PrivateKey_file( ssl_ctx, certfile, SSL_FILETYPE_PEM ) == 0 ||
+         SSL_CTX_check_private_key( ssl_ctx ) == 0 )
+        {
+        ERR_print_errors_fp( stderr );
+        exit( 1 );
+        }
+    if ( cipher != (char*) 0 )
+        {
+        if ( SSL_CTX_set_cipher_list( ssl_ctx, cipher ) == 0 )
+        {
+        ERR_print_errors_fp( stderr );
+        exit( 1 );
+        }
+        }
+    }
 #endif /* USE_SSL */
 
     if (!debug) {
         /* Make ourselves a daemon. */
 #ifdef HAVE_DAEMON
-                                                                                                                                if ( daemon( 1, 1 ) < 0 )
-	    {
-	    syslog( LOG_CRIT, "daemon - %m" );
-	    perror( "daemon" );
-	    exit( 1 );
-	    }
+        if ( daemon( 1, 1 ) < 0 )
+        {
+        syslog( LOG_CRIT, "daemon - %m" );
+        perror( "daemon" );
+        exit( 1 );
+        }
 #else
         switch (fork()) {
             case 0:
@@ -673,8 +673,8 @@ main(int argc, char **argv) {
             perror("initgroups");
         }
 #ifdef HAVE_SETLOGIN
-                                                                                                                                /* Set login name. */
-	(void) setlogin( user );
+        /* Set login name. */
+    (void) setlogin( user );
 #endif /* HAVE_SETLOGIN */
     }
 
@@ -756,7 +756,7 @@ main(int argc, char **argv) {
 
     /* Catch various signals. */
 #ifdef HAVE_SIGSET
-                                                                                                                            (void) sigset( SIGTERM, handle_sigterm );
+    (void) sigset( SIGTERM, handle_sigterm );
     (void) sigset( SIGINT, handle_sigterm );
     (void) sigset( SIGUSR1, handle_sigterm );
     (void) sigset( SIGHUP, handle_sighup );
@@ -835,8 +835,8 @@ main(int argc, char **argv) {
             if (errno == EINTR || errno == EAGAIN || errno == ECONNABORTED)
                 continue;    /* try again */
 #ifdef EPROTO
-                                                                                                                                    if ( errno == EPROTO )
-		continue;	/* try again */
+            if ( errno == EPROTO )
+        continue;	/* try again */
 #endif /* EPROTO */
             syslog(LOG_CRIT, "accept - %m");
             perror("accept");
@@ -972,21 +972,21 @@ read_config(char *filename) {
                 max_age = atoi(value);
             }
 #ifdef USE_SSL
-                                                                                                                                        else if ( strcasecmp( name, "ssl" ) == 0 )
-		{
-		no_value_required( name, value );
-		do_ssl = 1;
-		}
-	    else if ( strcasecmp( name, "certfile" ) == 0 )
-		{
-		value_required( name, value );
-		certfile = e_strdup( value );
-		}
-	    else if ( strcasecmp( name, "cipher" ) == 0 )
-		{
-		value_required( name, value );
-		cipher = e_strdup( value );
-		}
+                else if ( strcasecmp( name, "ssl" ) == 0 )
+        {
+        no_value_required( name, value );
+        do_ssl = 1;
+        }
+        else if ( strcasecmp( name, "certfile" ) == 0 )
+        {
+        value_required( name, value );
+        certfile = e_strdup( value );
+        }
+        else if ( strcasecmp( name, "cipher" ) == 0 )
+        {
+        value_required( name, value );
+        cipher = e_strdup( value );
+        }
 #endif /* USE_SSL */
             else {
                 (void) fprintf(
@@ -1070,7 +1070,7 @@ initialize_listen_socket(usockaddr *usaP) {
     }
 
 #ifdef HAVE_ACCEPT_FILTERS
-                                                                                                                            {
+    {
     struct accept_filter_arg af;
     (void) bzero( &af, sizeof(af) );
     (void) strcpy( af.af_name, ACCEPT_FILTER_NAME );
@@ -1125,30 +1125,30 @@ handle_request(void) {
     useragent = "";
 
 #ifdef TCP_NOPUSH
-                                                                                                                            if ( ! do_ssl )
-	{
-	/* Set the TCP_NOPUSH socket option, to try and avoid the 0.2 second
-	** delay between sending the headers and sending the data.  A better
-	** solution is writev() (as used in thttpd), or send the headers with
-	** send(MSG_MORE) (only available in Linux so far).
-	*/
-	r = 1;
-	(void) setsockopt(
-	    conn_fd, IPPROTO_TCP, TCP_NOPUSH, (void*) &r, sizeof(r) );
-	}
+    if ( ! do_ssl )
+    {
+    /* Set the TCP_NOPUSH socket option, to try and avoid the 0.2 second
+    ** delay between sending the headers and sending the data.  A better
+    ** solution is writev() (as used in thttpd), or send the headers with
+    ** send(MSG_MORE) (only available in Linux so far).
+    */
+    r = 1;
+    (void) setsockopt(
+        conn_fd, IPPROTO_TCP, TCP_NOPUSH, (void*) &r, sizeof(r) );
+    }
 #endif /* TCP_NOPUSH */
 
 #ifdef USE_SSL
-                                                                                                                            if ( do_ssl )
-	{
-	ssl = SSL_new( ssl_ctx );
-	SSL_set_fd( ssl, conn_fd );
-	if ( SSL_accept( ssl ) == 0 )
-	    {
-	    ERR_print_errors_fp( stderr );
-	    finish_request( 1 );
-	    }
-	}
+    if ( do_ssl )
+    {
+    ssl = SSL_new( ssl_ctx );
+    SSL_set_fd( ssl, conn_fd );
+    if ( SSL_accept( ssl ) == 0 )
+        {
+        ERR_print_errors_fp( stderr );
+        finish_request( 1 );
+        }
+    }
 #endif /* USE_SSL */
 
     /* Read in the request. */
@@ -1331,14 +1331,14 @@ finish_request(int exitstatus) {
 #define LINGER_SECS 5
 
 #ifdef LINGER_SOCKOPT
-                                                                                                                            /* The sockopt version of lingering close. Doesn't actually work. */
+    /* The sockopt version of lingering close. Doesn't actually work. */
     struct linger lin;
 
     shutdown( conn_fd, SHUT_WR );
     lin.l_onoff = 1;
     lin.l_linger = LINGER_SECS;
     (void) setsockopt(
-	conn_fd, SOL_SOCKET, SO_LINGER, (void*) &lin, sizeof(lin) );
+    conn_fd, SOL_SOCKET, SO_LINGER, (void*) &lin, sizeof(lin) );
 #endif /* LINGER_SOCKOPT */
 
 #ifdef LINGER_READ
@@ -1513,13 +1513,13 @@ do_file(void) {
     {
 #ifdef HAVE_SENDFILE
 
-                                                                                                                                #ifndef USE_SSL
-	send_via_sendfile( fd, conn_fd, sb.st_size );
+#ifndef USE_SSL
+        send_via_sendfile( fd, conn_fd, sb.st_size );
 #else /* USE_SSL */
-	if ( do_ssl )
-	    send_via_write( fd, sb.st_size );
-	else
-	    send_via_sendfile( fd, conn_fd, sb.st_size );
+        if ( do_ssl )
+            send_via_write( fd, sb.st_size );
+        else
+            send_via_sendfile( fd, conn_fd, sb.st_size );
 #endif /* USE_SSL */
 
 #else /* HAVE_SENDFILE */
@@ -1539,7 +1539,7 @@ do_dir(void) {
     char *contents;
     size_t contents_size, contents_len;
 #ifdef HAVE_SCANDIR
-                                                                                                                            int n, i;
+    int n, i;
     struct dirent **dl;
     char* name_info;
 #else /* HAVE_SCANDIR */
@@ -1557,14 +1557,14 @@ do_dir(void) {
     check_referrer();
 
 #ifdef HAVE_SCANDIR
-                                                                                                                            n = scandir( file, &dl, NULL, alphasort );
+    n = scandir( file, &dl, NULL, alphasort );
     if ( n < 0 )
-	{
-	syslog(
-	    LOG_INFO, "%.80s Directory \"%.80s\" is protected",
-	    ntoa( &client_addr ), path );
-	send_error( 403, "Forbidden", "", "Directory is protected." );
-	}
+    {
+    syslog(
+        LOG_INFO, "%.80s Directory \"%.80s\" is protected",
+        ntoa( &client_addr ), path );
+    send_error( 403, "Forbidden", "", "Directory is protected." );
+    }
 #endif /* HAVE_SCANDIR */
 
     contents_size = 0;
@@ -1586,11 +1586,11 @@ do_dir(void) {
 
 #ifdef HAVE_SCANDIR
 
-                                                                                                                            for ( i = 0; i < n; ++i )
-	{
-	name_info = file_details( file, dl[i]->d_name );
-	add_str( &contents, &contents_size, &contents_len, name_info );
-	}
+    for ( i = 0; i < n; ++i )
+    {
+    name_info = file_details( file, dl[i]->d_name );
+    add_str( &contents, &contents_size, &contents_len, name_info );
+    }
 
 #else /* HAVE_SCANDIR */
     /* Magic HTML ls command! */
@@ -1636,7 +1636,7 @@ do_dir(void) {
 
 #ifdef HAVE_SCANDIR
 
-                                                                                                                        static char*
+static char*
 file_details( const char* d, const char* name )
     {
     struct stat sb2;
@@ -1646,12 +1646,12 @@ file_details( const char* d, const char* name )
 
     (void) snprintf( buf, sizeof(buf), "%s/%s", d, name );
     if ( lstat( buf, &sb2 ) < 0 )
-	return "???";
+    return "???";
     (void) strftime( timestr, sizeof(timestr), "%d%b%Y %H:%M", localtime( &sb2.st_mtime ) );
     strencode( encname, sizeof(encname), name );
     (void) snprintf(
-	buf, sizeof( buf ), "<a href=\"%s\">%-32.32s</a>    %15s %14lld\n",
-	encname, name, timestr, (long long) sb2.st_size );
+    buf, sizeof( buf ), "<a href=\"%s\">%-32.32s</a>    %15s %14lld\n",
+    encname, name, timestr, (long long) sb2.st_size );
     return buf;
     }
 
@@ -1663,20 +1663,20 @@ strencode( char* to, size_t tosize, const char* from )
     int tolen;
 
     for ( tolen = 0; *from != '\0' && tolen + 4 < tosize; ++from )
-	{
-	if ( isalnum(*from) || strchr( "/_.-~", *from ) != (char*) 0 )
-	    {
-	    *to = *from;
-	    ++to;
-	    ++tolen;
-	    }
-	else
-	    {
-	    (void) sprintf( to, "%%%02x", (int) *from & 0xff );
-	    to += 3;
-	    tolen += 3;
-	    }
-	}
+    {
+    if ( isalnum(*from) || strchr( "/_.-~", *from ) != (char*) 0 )
+        {
+        *to = *from;
+        ++to;
+        ++tolen;
+        }
+    else
+        {
+        (void) sprintf( to, "%%%02x", (int) *from & 0xff );
+        to += 3;
+        tolen += 3;
+        }
+    }
     *to = '\0';
     }
 
@@ -1903,11 +1903,11 @@ post_post_garbage_hack(void) {
     char buf[2];
 
 #ifdef USE_SSL
-                                                                                                                            if ( do_ssl )
-	/* We don't need to do this for SSL, since the garbage has
-	** already been read.  Probably.
-	*/
-	return;
+    if ( do_ssl )
+    /* We don't need to do this for SSL, since the garbage has
+    ** already been read.  Probably.
+    */
+    return;
 #endif /* USE_SSL */
 
     set_ndelay(conn_fd);
@@ -2569,10 +2569,10 @@ send_via_write(int fd, off_t size) {
             unsigned char *p = ptr;
             size_t remaining_size = size_size;
 #ifdef MADV_SEQUENTIAL
-                                                                                                                                    /* If we have madvise, might as well call it.  Although sequential
-	    ** access is probably already the default.
-	    */
-	    (void) madvise( ptr, size_size, MADV_SEQUENTIAL );
+            /* If we have madvise, might as well call it.  Although sequential
+        ** access is probably already the default.
+        */
+        (void) madvise( ptr, size_size, MADV_SEQUENTIAL );
 #endif /* MADV_SEQUENTIAL */
             /* We could send the whole file in a single write, but if
 	    ** it's huge then we run the risk of hitting the timeout.
@@ -2657,10 +2657,10 @@ send_via_sendfile(int fd, int s, off_t size) {
 static ssize_t
 my_read(char *buf, size_t size) {
 #ifdef USE_SSL
-                                                                                                                            if ( do_ssl )
-	return SSL_read( ssl, buf, size );
+    if ( do_ssl )
+    return SSL_read( ssl, buf, size );
     else
-	return read( conn_fd, buf, size );
+    return read( conn_fd, buf, size );
 #else /* USE_SSL */
     return read(conn_fd, buf, size);
 #endif /* USE_SSL */
@@ -2670,10 +2670,10 @@ my_read(char *buf, size_t size) {
 static ssize_t
 my_write(void *buf, size_t size) {
 #ifdef USE_SSL
-                                                                                                                            if ( do_ssl )
-	return SSL_write( ssl, buf, size );
+    if ( do_ssl )
+    return SSL_write( ssl, buf, size );
     else
-	return write( conn_fd, buf, size );
+    return write( conn_fd, buf, size );
 #else /* USE_SSL */
     return write(conn_fd, buf, size);
 #endif /* USE_SSL */
@@ -2681,7 +2681,7 @@ my_write(void *buf, size_t size) {
 
 
 #ifdef HAVE_SENDFILE
-                                                                                                                        static ssize_t
+static ssize_t
 my_sendfile( int fd, int s, off_t offset, size_t nbytes )
     {
 #ifdef HAVE_LINUX_SENDFILE
@@ -2691,9 +2691,9 @@ my_sendfile( int fd, int s, off_t offset, size_t nbytes )
     int r;
     r = sendfile( fd, s, offset, nbytes, (struct sf_hdtr*) 0, (off_t*) 0, 0 );
     if ( r == 0 )
-	return nbytes;
+    return nbytes;
     else
-	return r;
+    return r;
 #endif /* HAVE_LINUX_SENDFILE */
     }
 #endif /* HAVE_SENDFILE */
@@ -3158,7 +3158,7 @@ static void
 lookup_hostname(usockaddr *usa4P, size_t sa4_len, int *gotv4P, usockaddr *usa6P, size_t sa6_len, int *gotv6P) {
 #ifdef USE_IPV6
 
-                                                                                                                            struct addrinfo hints;
+    struct addrinfo hints;
     char portstr[10];
     int gaierr;
     struct addrinfo* ai;
@@ -3172,75 +3172,75 @@ lookup_hostname(usockaddr *usa4P, size_t sa4_len, int *gotv4P, usockaddr *usa6P,
     hints.ai_socktype = SOCK_STREAM;
     (void) snprintf( portstr, sizeof(portstr), "%d", (int) port );
     if ( (gaierr = getaddrinfo( hostname, portstr, &hints, &ai )) != 0 )
-	{
-	syslog(
-	    LOG_CRIT, "getaddrinfo %.80s - %s", hostname,
-	    gai_strerror( gaierr ) );
-	(void) fprintf(
-	    stderr, "%s: getaddrinfo %.80s - %s\n", argv0, hostname,
-	    gai_strerror( gaierr ) );
-	exit( 1 );
-	}
+    {
+    syslog(
+        LOG_CRIT, "getaddrinfo %.80s - %s", hostname,
+        gai_strerror( gaierr ) );
+    (void) fprintf(
+        stderr, "%s: getaddrinfo %.80s - %s\n", argv0, hostname,
+        gai_strerror( gaierr ) );
+    exit( 1 );
+    }
 
     /* Find the first IPv6 and IPv4 entries. */
     aiv6 = (struct addrinfo*) 0;
     aiv4 = (struct addrinfo*) 0;
     for ( ai2 = ai; ai2 != (struct addrinfo*) 0; ai2 = ai2->ai_next )
-	{
-	switch ( ai2->ai_family )
-	    {
-	    case AF_INET6:
-	    if ( aiv6 == (struct addrinfo*) 0 )
-		aiv6 = ai2;
-	    break;
-	    case AF_INET:
-	    if ( aiv4 == (struct addrinfo*) 0 )
-		aiv4 = ai2;
-	    break;
-	    }
-	}
+    {
+    switch ( ai2->ai_family )
+        {
+        case AF_INET6:
+        if ( aiv6 == (struct addrinfo*) 0 )
+        aiv6 = ai2;
+        break;
+        case AF_INET:
+        if ( aiv4 == (struct addrinfo*) 0 )
+        aiv4 = ai2;
+        break;
+        }
+    }
 
     if ( aiv6 == (struct addrinfo*) 0 )
-	*gotv6P = 0;
+    *gotv6P = 0;
     else
-	{
-	if ( sa6_len < aiv6->ai_addrlen )
-	    {
-	    syslog(
-		LOG_CRIT, "%.80s - sockaddr too small (%lu < %lu)",
-		hostname, (unsigned long) sa6_len,
-		(unsigned long) aiv6->ai_addrlen );
-	    (void) fprintf(
-		stderr, "%s: %.80s - sockaddr too small (%lu < %lu)\n",
-		argv0, hostname, (unsigned long) sa6_len,
-		(unsigned long) aiv6->ai_addrlen );
-	    exit( 1 );
-	    }
-	(void) memset( usa6P, 0, sa6_len );
-	(void) memmove( usa6P, aiv6->ai_addr, aiv6->ai_addrlen );
-	*gotv6P = 1;
-	}
+    {
+    if ( sa6_len < aiv6->ai_addrlen )
+        {
+        syslog(
+        LOG_CRIT, "%.80s - sockaddr too small (%lu < %lu)",
+        hostname, (unsigned long) sa6_len,
+        (unsigned long) aiv6->ai_addrlen );
+        (void) fprintf(
+        stderr, "%s: %.80s - sockaddr too small (%lu < %lu)\n",
+        argv0, hostname, (unsigned long) sa6_len,
+        (unsigned long) aiv6->ai_addrlen );
+        exit( 1 );
+        }
+    (void) memset( usa6P, 0, sa6_len );
+    (void) memmove( usa6P, aiv6->ai_addr, aiv6->ai_addrlen );
+    *gotv6P = 1;
+    }
 
     if ( aiv4 == (struct addrinfo*) 0 )
-	*gotv4P = 0;
+    *gotv4P = 0;
     else
-	{
-	if ( sa4_len < aiv4->ai_addrlen )
-	    {
-	    syslog(
-		LOG_CRIT, "%.80s - sockaddr too small (%lu < %lu)",
-		hostname, (unsigned long) sa4_len,
-		(unsigned long) aiv4->ai_addrlen );
-	    (void) fprintf(
-		stderr, "%s: %.80s - sockaddr too small (%lu < %lu)\n",
-		argv0, hostname, (unsigned long) sa4_len,
-		(unsigned long) aiv4->ai_addrlen );
-	    exit( 1 );
-	    }
-	(void) memset( usa4P, 0, sa4_len );
-	(void) memmove( usa4P, aiv4->ai_addr, aiv4->ai_addrlen );
-	*gotv4P = 1;
-	}
+    {
+    if ( sa4_len < aiv4->ai_addrlen )
+        {
+        syslog(
+        LOG_CRIT, "%.80s - sockaddr too small (%lu < %lu)",
+        hostname, (unsigned long) sa4_len,
+        (unsigned long) aiv4->ai_addrlen );
+        (void) fprintf(
+        stderr, "%s: %.80s - sockaddr too small (%lu < %lu)\n",
+        argv0, hostname, (unsigned long) sa4_len,
+        (unsigned long) aiv4->ai_addrlen );
+        exit( 1 );
+        }
+    (void) memset( usa4P, 0, sa4_len );
+    (void) memmove( usa4P, aiv4->ai_addr, aiv4->ai_addrlen );
+    *gotv4P = 1;
+    }
 
     freeaddrinfo( ai );
 
@@ -3260,12 +3260,12 @@ lookup_hostname(usockaddr *usa4P, size_t sa4_len, int *gotv4P, usockaddr *usa6P,
             he = gethostbyname(hostname);
             if (he == (struct hostent *) 0) {
 #ifdef HAVE_HSTRERROR
-                                                                                                                                        syslog(
-		    LOG_CRIT, "gethostbyname %.80s - %s", hostname,
-		    hstrerror( h_errno ) );
-		(void) fprintf(
-		    stderr, "%s: gethostbyname %.80s - %s\n", argv0, hostname,
-		    hstrerror( h_errno ) );
+                syslog(
+            LOG_CRIT, "gethostbyname %.80s - %s", hostname,
+            hstrerror( h_errno ) );
+        (void) fprintf(
+            stderr, "%s: gethostbyname %.80s - %s\n", argv0, hostname,
+            hstrerror( h_errno ) );
 #else /* HAVE_HSTRERROR */
                 syslog(LOG_CRIT, "gethostbyname %.80s failed", hostname);
                 (void) fprintf(
@@ -3295,16 +3295,16 @@ lookup_hostname(usockaddr *usa4P, size_t sa4_len, int *gotv4P, usockaddr *usa6P,
 static char *
 ntoa(usockaddr *usaP) {
 #ifdef USE_IPV6
-                                                                                                                            static char str[200];
+    static char str[200];
 
     if ( getnameinfo( &usaP->sa, sockaddr_len( usaP ), str, sizeof(str), 0, 0, NI_NUMERICHOST ) != 0 )
-	{
-	str[0] = '?';
-	str[1] = '\0';
-	}
+    {
+    str[0] = '?';
+    str[1] = '\0';
+    }
     else if ( IN6_IS_ADDR_V4MAPPED( &usaP->sa_in6.sin6_addr ) && strncmp( str, "::ffff:", 7 ) == 0 )
-	/* Elide IPv6ish prefix for IPv4 addresses. */
-	(void) ol_strcpy( str, &str[7] );
+    /* Elide IPv6ish prefix for IPv4 addresses. */
+    (void) ol_strcpy( str, &str[7] );
 
     return str;
 
@@ -3520,7 +3520,7 @@ e_strdup(char *ostr) {
 
 
 #ifdef NO_SNPRINTF
-                                                                                                                        /* Some systems don't have snprintf(), so we make our own that uses
+/* Some systems don't have snprintf(), so we make our own that uses
 ** vsprintf().  This workaround is probably vulnerable to buffer overruns,
 ** so upgrade your OS!
 */
